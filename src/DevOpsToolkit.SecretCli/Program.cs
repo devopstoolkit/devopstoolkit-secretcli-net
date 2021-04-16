@@ -1,29 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using CommandLine;
+using DevOpsToolkit.SecretCli.Models;
 using SecurityDriven.Inferno;
 
 namespace DevOpsToolkit.SecretCli
 {
-    public static class StringCrypto
-    {
-        public static string EncryptString(string stringToEncrypt, string key)
-        {
-            var encryptedBytes =
-                SuiteB.Encrypt(Encoding.Default.GetBytes(key), Encoding.Default.GetBytes(stringToEncrypt));
-
-            return encryptedBytes != null ? Convert.ToBase64String(encryptedBytes) : null;
-        }
-
-        public static string DecryptString(string stringToDecrypt, string key)
-        {
-            var decryptedBytes = SuiteB.Decrypt(Encoding.Default.GetBytes(key),
-                Convert.FromBase64String(stringToDecrypt));
-
-            return decryptedBytes != null ? Encoding.Default.GetString(decryptedBytes) : null;
-        }
-    }
-
     class Program
     {
         static void Main(string[] args)
@@ -37,13 +21,40 @@ namespace DevOpsToolkit.SecretCli
             Console.WriteLine(@"     \/     \/     \/     \/         ");
             Console.WriteLine(@"");
             
+            Parser.Default.ParseArguments<Encrypt, Decrypt>(args)
+                .WithParsed<Encrypt>(EncryptString)
+                .WithParsed<Decrypt>(DecryptString)
+                .WithNotParsed(Errors);
+        }
+        
+        private static void Errors(IEnumerable<Error> errors)
+        {
+            foreach (var error in errors)
+            {
+                Console.WriteLine($"Error: {error.ToString()}");
+            }
+        }
+        
+        private static void EncryptString(Encrypt options)
+        {
             var configuration = Configuration.GetConfiguration();
 
-            Console.WriteLine("Enter plain text secret:");
-            var secret = Console.ReadLine();
             Console.WriteLine(@"");
-            Console.WriteLine($"Plain: {secret}");
-            Console.WriteLine($"Encrypted: {StringCrypto.EncryptString(secret, configuration["EncryptionKey"])}");
+            Console.WriteLine($"Plain: {options.Value}");
+            Console.WriteLine($"Encrypted: {StringCrypto.EncryptString(options.Value, configuration["EncryptionKey"])}");
+
+            Console.WriteLine("");
+            Console.WriteLine("Press key to exit.");
+            Console.ReadLine();
+        }
+        
+        private static void DecryptString(Decrypt options)
+        {
+            var configuration = Configuration.GetConfiguration();
+
+            Console.WriteLine(@"");
+            Console.WriteLine($"Encrypted: {options.Value}");
+            Console.WriteLine($"Plain: {StringCrypto.DecryptString(options.Value, configuration["EncryptionKey"])}");
 
             Console.WriteLine("");
             Console.WriteLine("Press key to exit.");

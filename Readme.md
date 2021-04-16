@@ -1,4 +1,4 @@
-# DevOpsToolkit.SenCli
+# DevOpsToolkit.SecretCli
 
 Easily encrypt secrets:
 
